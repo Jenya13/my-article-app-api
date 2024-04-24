@@ -49,6 +49,17 @@ class Article(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    topics = models.ManyToManyField('Topic')
 
     def __str__(self):
         return self.title
+
+
+class Topic(models.Model):
+    """Topic model object for filtering articles."""
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name

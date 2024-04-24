@@ -7,6 +7,11 @@ from django.contrib.auth import get_user_model
 from core import models
 
 
+def create_user(email='user@example.com', password='testpass123'):
+    """Create and return a new user"""
+    return get_user_model().objects.create_user(email, password)
+
+
 class ModelTests(TestCase):
     """Test models."""
 
@@ -50,3 +55,9 @@ class ModelTests(TestCase):
         article = models.Article.objects.create(
             user=user, title="Test title", content="Test article content.")
         self.assertEqual(str(article), article.title)
+
+    def test_create_topic(self):
+        """Test creating topic successful."""
+        user = create_user()
+        topic = models.Topic.objects.create(user=user, name='Topic test')
+        self.assertEqual(str(topic), topic.name)
