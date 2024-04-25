@@ -8,6 +8,7 @@ from article import views
 
 router = DefaultRouter()
 router.register('articles', views.ArticleViewSet)
+router.register('topics', views.TopicViewSet)
 
 app_name = 'article'
 

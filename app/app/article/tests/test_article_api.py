@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from core.models import Article
+from core.models import Article, Topic
 from article.serializers import (ArticleSerializer, ArticleDetailSerializer)
 
 ARTICLE_URL = reverse('article:article-list')
@@ -112,3 +112,76 @@ class PrivateArticleAPITests(TestCase):
             self.assertEqual(getattr(article, k), v)
 
         self.assertEqual(article.user, self.user)
+
+    def test_create_article_with_new_topics(self):
+        """Test creating article with new topics."""
+
+        payload = {
+            'title': 'Test title',
+            'content': 'some content',
+            'topics': [{'name': 'topic 1'}, {'name': 'topic 2'}]
+        }
+        res = self.client.post(ARTICLE_URL, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        articles = Article.objects.filter(user=self.user)
+        self.assertEqual(articles.count(), 1)
+        article = articles[0]
+        self.assertEqual(article.topics.count(), 2)
+
+        for topic in payload['topics']:
+            exists = article.topics.filter(
+                name=topic['name'], user=self.user).exists()
+            self.assertTrue(exists)
+
+    def test_create_article_with_existing_topic(self):
+        """Test creating an article with existing topic."""
+        topic_software = Topic.objects.create(user=self.user, name='Software')
+        payload = {
+            'title': 'Some software article',
+            'content': 'Article content about software',
+            'topics': [{'name': 'Software'}, {'name': 'other topic'}]
+        }
+        res = self.client.post(ARTICLE_URL, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        articles = Article.objects.filter(user=self.user)
+        self.assertEqual(articles.count(), 1)
+        article = articles[0]
+        self.assertEqual(article.topics.count(), 2)
+        self.assertIn(topic_software, article.topics.all())
+        for topic in payload['topics']:
+            exists = article.topics.filter(
+                name=topic['name'], user=self.user).exists()
+            self.assertTrue(exists)
+
+    def test_create_topic_on_update(self):
+        """Test creating topic when updating an article."""
+        article = create_article(user=self.user)
+
+        payload = {
+            'topics': [{'name': 'Software'}]
+        }
+
+        url = detail_url(article.id)
+        res = self.client.patch(url, payload, format='json')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        new_topic = Topic.objects.get(user=self.user, name='Software')
+        self.assertIn(new_topic, article.topics.all())
+
+    def test_update_article_assign_topic(self):
+        """Test assigning an existing topic when updating an article."""
+        topic_finance = Topic.objects.create(user=self.user, name='Finance')
+        article = create_article(user=self.user)
+        article.topics.add(topic_finance)
+
+        topic_money = Topic.objects.create(user=self.user, name='Money')
+        payload = {
+            'topics': [{'name': 'Money'}]
+        }
+        url = detail_url(article.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn(topic_money, article.topics.all())
+        self.assertNotIn(topic_finance, article.topics.all())
