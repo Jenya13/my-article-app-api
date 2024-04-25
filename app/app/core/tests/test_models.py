@@ -4,6 +4,12 @@ Tests for models.
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from core import models
+
+
+def create_user(email='user@example.com', password='testpass123'):
+    """Create and return a new user"""
+    return get_user_model().objects.create_user(email, password)
 
 
 class ModelTests(TestCase):
@@ -42,3 +48,16 @@ class ModelTests(TestCase):
 
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
+
+    def test_create_article(self):
+        """Test creating an article is successful."""
+        user = get_user_model().objects.create_user('test@example.com', 'testpass123')
+        article = models.Article.objects.create(
+            user=user, title="Test title", content="Test article content.")
+        self.assertEqual(str(article), article.title)
+
+    def test_create_topic(self):
+        """Test creating topic successful."""
+        user = create_user()
+        topic = models.Topic.objects.create(user=user, name='Topic test')
+        self.assertEqual(str(topic), topic.name)
