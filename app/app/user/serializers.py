@@ -5,19 +5,44 @@ Serializers for the user API View.
 from django.contrib.auth import (get_user_model, authenticate)
 from django.utils.translation import gettext as _
 from rest_framework import serializers
+from django.core.exceptions import ValidationError
+
+
+def validate_name(value):
+    """
+    Validator function to check if the name contains only letters from a-z or A-Z,
+    and convert the first character to uppercase.
+    """
+    if not value.isalpha():
+        raise ValidationError("Name must contain only letters.")
+    return value.capitalize()
 
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for user object."""
+    first_name = serializers.CharField(validators=[validate_name])
+    last_name = serializers.CharField(validators=[validate_name])
 
     class Meta:
         model = get_user_model()
-        fields = ['email', 'password', 'name']
+        fields = ['email', 'password', 'first_name',
+                  'last_name', 'bio', 'contact_me']
         extra_kwargs = {'password': {'write_only': True, 'min_length': 5}}
 
     def create(self, validated_data):
         """Create and return user with encypted password."""
         return get_user_model().objects.create_user(**validated_data)
+
+    def validate(self, data):
+        """
+        Validate the serializer fields before creating the user object.
+        This method is called after all field-level validations are passed.
+        """
+        # Ensure that the first character of the name fields is capitalized
+        data['first_name'] = data['first_name'].capitalize()
+        data['last_name'] = data['last_name'].capitalize()
+
+        return data
 
 
 class AuthTokenSerializer(serializers.Serializer):

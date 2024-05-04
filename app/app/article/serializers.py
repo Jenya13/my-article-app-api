@@ -16,13 +16,19 @@ class TopicSerializer(serializers.ModelSerializer):
 
 class ArticleSerializer(serializers.ModelSerializer):
     """Serializer for article."""
-
+    author = serializers.SerializerMethodField(
+        read_only=True)  # CharField(source='user.name', read_only=True)
     topics = TopicSerializer(many=True, required=False)
 
     class Meta:
         model = Article
-        fields = ['id', 'title',  'created_at', 'updated_at', 'topics']
+        fields = ['id', 'author', 'title', 'opening',
+                  'created_at', 'updated_at', 'topics']
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_author(self, obj):
+        """Method to get the author name."""
+        return f"{obj.user.first_name} {obj.user.last_name}"
 
     def _get_or_create_topics(self, topics, article):
         """Handle getting or creating topics."""

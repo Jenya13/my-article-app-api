@@ -1,8 +1,9 @@
 """ 
 Views for article APIs.
 """
-
-from rest_framework import (viewsets, mixins)
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
@@ -10,7 +11,7 @@ from core.models import Article, Topic
 from article import serializers
 
 
-class ArticleViewSet(viewsets.ModelViewSet):
+class ArticleMVS(viewsets.ModelViewSet):
     """View for manage article APIs."""
     serializer_class = serializers.ArticleDetailSerializer
     queryset = Article.objects.all()
@@ -30,6 +31,31 @@ class ArticleViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Create a new article."""
         serializer.save(user=self.request.user)
+
+
+class ArticleVS(viewsets.ViewSet):
+    """View to retrieve a list of all articles for all users or specific article for authenticated user."""
+
+    # to add permissions
+
+    def list(self, request):
+        articles = Article.objects.all()
+        serializer = serializers.ArticleSerializer(articles, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk='pk'):
+        article = Article.objects.get(pk=pk)
+        serializer = serializers.ArticleSerializer(article)
+        return Response(serializer.data)
+
+
+# class ArticleVS(APIView):
+#     """View to retrieve a list of all articles and."""
+
+#     def get(self, request):
+#         articles = Article.objects.all()
+#         serializer = serializers.ArticleSerializer(articles, many=True)
+#         return Response(serializer.data)
 
 
 class TopicViewSet(mixins.ListModelMixin,

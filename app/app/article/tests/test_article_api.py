@@ -18,6 +18,11 @@ def detail_url(article_id):
     return reverse('article:article-detail', args=[article_id])
 
 
+def list_url():
+    """Create and return all articles url."""
+    return reverse('article:articles-all')
+
+
 def create_article(user, **params):
     """Create and return a sample article."""
     defaults = {
@@ -41,6 +46,33 @@ class PublicArticleAPITests(TestCase):
         res = self.client.get(ARTICLE_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_unauthorized_user_retriev_all_articles(self):
+        """Test retrieving a list of articles."""
+        user1 = get_user_model().objects.create_user(
+            'user1@example.com',
+            'testpass123'
+        )
+        user2 = get_user_model().objects.create_user(
+            'user2@example.com',
+            'testpass123'
+        )
+        create_article(user=user1)
+        create_article(user=user2)
+
+        url = list_url()
+
+        res = self.client.get(url)
+
+        articles = Article.objects.all().order_by('-id')
+        serializer = ArticleSerializer(articles, many=True)
+
+        # Sort both lists by 'id' before comparison
+        res_data_sorted = sorted(res.data, key=lambda x: x['id'])
+        serializer_data_sorted = sorted(serializer.data, key=lambda x: x['id'])
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_data_sorted, serializer_data_sorted)
 
 
 class PrivateArticleAPITests(TestCase):
