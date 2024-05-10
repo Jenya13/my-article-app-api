@@ -1,14 +1,51 @@
 """ 
 Views for article APIs.
 """
-from rest_framework.views import APIView
+
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-
-from core.models import Article, Topic
+from django.shortcuts import get_object_or_404
+from core.models import Article, Comment, Topic
 from article import serializers
+
+
+class CommentListCreateView(generics.ListCreateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = serializers.CommentSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        This method filters the queryset to only include comments related to a specific article.
+        """
+        article_id = self.kwargs.get(
+            'pk')
+        return Comment.objects.filter(article_id=article_id)
+
+    def perform_create(self, serializer):
+        """
+        Method for creating a comment.
+        """
+        article_id = self.kwargs.get(
+            'pk')
+        serializer.save(user=self.request.user, article_id=article_id)
+
+
+class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = serializers.CommentSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        article_id = self.kwargs.get('article_id')
+        comment_id = self.kwargs.get('pk')
+        # return Comment.objects.get(article_id=article_id, id=comment_id)
+        return get_object_or_404(Comment, article_id=article_id, id=comment_id)
 
 
 class ArticleMVS(viewsets.ModelViewSet):
@@ -47,15 +84,6 @@ class ArticleVS(viewsets.ViewSet):
         article = Article.objects.get(pk=pk)
         serializer = serializers.ArticleSerializer(article)
         return Response(serializer.data)
-
-
-# class ArticleVS(APIView):
-#     """View to retrieve a list of all articles and."""
-
-#     def get(self, request):
-#         articles = Article.objects.all()
-#         serializer = serializers.ArticleSerializer(articles, many=True)
-#         return Response(serializer.data)
 
 
 class TopicViewSet(mixins.ListModelMixin,

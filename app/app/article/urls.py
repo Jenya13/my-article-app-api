@@ -15,4 +15,11 @@ app_name = 'article'
 
 urlpatterns = [
     path('', include(router.urls)),
+    # path('articles/<int:article_id>/comments/',
+    #      views.CommnetListCreateAV.as_view(), name='comment-list-create'),
+    path('<int:pk>/comments/',
+         views.CommentListCreateView.as_view(), name='comment-list-create'),
+
+    path('<int:article_id>/comments/<int:pk>/',
+         views.CommentRetrieveUpdateDestroyView.as_view(), name='comment-detail'),
 ]

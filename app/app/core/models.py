@@ -67,3 +67,18 @@ class Topic(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Comment(models.Model):
+    """Comment model object to leave comments on articles."""
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
+    article = models.ForeignKey(
+        Article, related_name='comments', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    content = models.TextField()
+
+    def __str__(self):
+        return self.content

@@ -1,12 +1,12 @@
 """ 
 Serializers for Article API.
 """
-from core.models import Article, Topic
+from core.models import Article, Comment, Topic
 from rest_framework import serializers
 
 
 class TopicSerializer(serializers.ModelSerializer):
-    """Serializer fo topics."""
+    """Serializer for topics."""
 
     class Meta:
         model = Topic
@@ -14,16 +14,33 @@ class TopicSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class CommentSerializer(serializers.ModelSerializer):
+    """Serializer for comments"""
+
+    user = serializers.SerializerMethodField(
+        read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'user', 'content', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_user(self, obj):
+        """Method to get the author name."""
+        return f"{obj.user.first_name} {obj.user.last_name}"
+
+
 class ArticleSerializer(serializers.ModelSerializer):
     """Serializer for article."""
     author = serializers.SerializerMethodField(
-        read_only=True)  # CharField(source='user.name', read_only=True)
+        read_only=True)
     topics = TopicSerializer(many=True, required=False)
+    comments = CommentSerializer(many=True, required=False)
 
     class Meta:
         model = Article
         fields = ['id', 'author', 'title', 'opening',
-                  'created_at', 'updated_at', 'topics']
+                  'created_at', 'updated_at', 'comments', 'topics']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_author(self, obj):

@@ -50,10 +50,14 @@ class PublicArticleAPITests(TestCase):
     def test_unauthorized_user_retriev_all_articles(self):
         """Test retrieving a list of articles."""
         user1 = get_user_model().objects.create_user(
+            'first',
+            'last',
             'user1@example.com',
             'testpass123'
         )
         user2 = get_user_model().objects.create_user(
+            'firstn',
+            'lastn',
             'user2@example.com',
             'testpass123'
         )
@@ -81,6 +85,8 @@ class PrivateArticleAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
+            'first',
+            'last',
             'user@example.com',
             'testpass123'
         )
@@ -102,6 +108,8 @@ class PrivateArticleAPITests(TestCase):
     def test_article_list_limited_to_user(self):
         """Test list of articles is limited to authenticated user."""
         other_user = get_user_model().objects.create_user(
+            'first',
+            'last',
             'other@example.com',
             'passtest123',
         )
