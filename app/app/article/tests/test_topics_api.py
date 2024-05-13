@@ -19,9 +19,9 @@ def detail_url(topic_id):
     return reverse('article:topic-detail', args=[topic_id])
 
 
-def create_user(first_name='first', last_name='last', email='user@example.com', password='testpass123'):
+def create_user(first_name='First', last_name='Last', email='user@example.com', password='testpass123'):
     """Create and return a user."""
-    return get_user_model().objects.create_user(email, password)
+    return get_user_model().objects.create_user(first_name, last_name, email, password)
 
 
 class PublicTopicAPITests(TestCase):
@@ -59,8 +59,8 @@ class PrivetTopicAPITests(TestCase):
 
     def test_topics_limited_to_user(self):
         """Test list of topics is limited to authenticated user."""
-        user2 = create_user(first_name='test',
-                            last_name='test', email='user2@example.com')
+        user2 = create_user(first_name='Testf',
+                            last_name='Testl', email='user2@example.com')
         Topic.objects.create(user=user2, name='Test topic 3')
         topic = Topic.objects.create(user=self.user, name='Test topic 4')
 

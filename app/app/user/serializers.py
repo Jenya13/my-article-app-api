@@ -33,9 +33,20 @@ class UserSerializer(serializers.ModelSerializer):
         """Create and return user with encypted password."""
         return get_user_model().objects.create_user(**validated_data)
 
+    def update(self, instance, validated_data):
+        """Method for updating user info."""
+        instance.first_name = validated_data.get(
+            'first_name', instance.first_name)
+        instance.last_name = validated_data.get(
+            'last_name', instance.last_name)
+        instance.bio = validated_data.get('bio', instance.bio)
+        instance.contact_me = validated_data.get(
+            'contact_me', instance.contact_me)
+        instance.save()
+        return instance
+
     def validate(self, data):
         """
-        Validate the serializer fields before creating the user object.
         This method is called after all field-level validations are passed.
         """
         # Ensure that the first character of the name fields is capitalized
@@ -69,7 +80,7 @@ class AuthTokenSerializer(serializers.Serializer):
         return attrs
 
     def update(self, instance, validated_data):
-        """Update and return use."""
+        """Update and return user."""
 
         password = validated_data.pop('password', None)
         user = super().update(instance, validated_data)

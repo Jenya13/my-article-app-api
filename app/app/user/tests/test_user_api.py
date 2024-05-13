@@ -95,7 +95,8 @@ class PublicUserApiTests(TestCase):
 
     def test_create_token_bad_credentials(self):
         """Test returns error if credentials invalid."""
-        create_user(email='test@example.com', password='testpass1234')
+        create_user(first_name='first', last_name='last',
+                    email='test@example.com', password='testpass1234')
         payload = {
             'first_name': 'first',
             'last_name': 'last',
@@ -149,18 +150,24 @@ class PrivateUserApiTests(TestCase):
             res.data, {'email': self.user.email, 'first_name': self.user.first_name, 'last_name': self.user.last_name, 'bio': self.user.bio, 'contact_me': self.user.contact_me})
 
     def test_post_me_not_allowed(self):
-        """Test POST is not allowed fo me endpoint."""
+        """Test POST is not allowed for me endpoint."""
         res = self.client.post(ME_URL, {})
 
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_update_user_profile(self):
         """Test updating the user profile for the authenticated user."""
-        payload = {'first_name': 'Updated name', 'password': 'newpass123'}
+        payload = {'first_name': 'Updatedfirst', "last_name": "Updatelast",
+                   "bio": "my bio", "contact_me": "my contact"}
 
         res = self.client.patch(ME_URL, payload)
         self.user.refresh_from_db()
-        self.assertEqual(self.user.first_name, payload['first_name'])
-        # self.assertEqual(self.user.last_name, payload['last_name'])
-        self.assertTrue(self.user.password, payload['password'])
+        self.assertEqual(self.user.first_name,
+                         payload['first_name'])
+        self.assertEqual(self.user.last_name,
+                         payload['last_name'])
+        self.assertEqual(self.user.bio, payload['bio'])
+        self.assertEqual(self.user.contact_me,
+                         payload['contact_me'])
+
         self.assertEqual(res.status_code, status.HTTP_200_OK)

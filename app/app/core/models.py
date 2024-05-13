@@ -9,19 +9,21 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 class UserManager(BaseUserManager):
     """User managment model."""
 
-    def create_user(self, email, password=None, **extra_fields):
+    def create_user(self, first_name, last_name, email, password=None, **extra_fields):
         """Create, save and return user"""
         if not email:
             raise ValueError("User must have email address.")
-        user = self.model(email=self.normalize_email(email), **extra_fields)
+        user = self.model(
+            first_name=first_name, last_name=last_name, email=self.normalize_email(email), **extra_fields)
+
         user.set_password(password)
         user.save(using=self._db)
 
         return user
 
-    def create_superuser(self, email, password):
+    def create_superuser(self, first_name, last_name, email, password):
         """Create and return superuser."""
-        user = self.create_user(email, password)
+        user = self.create_user(first_name, last_name, email, password)
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
