@@ -82,7 +82,7 @@ class ArticleVS(viewsets.ViewSet):
 
     def retrieve(self, request, pk='pk'):
         article = Article.objects.get(pk=pk)
-        serializer = serializers.ArticleSerializer(article)
+        serializer = serializers.ArticleDetailSerializer(article)
         return Response(serializer.data)
 
 

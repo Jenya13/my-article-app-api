@@ -27,6 +27,7 @@ def create_article(user, **params):
     """Create and return a sample article."""
     defaults = {
         'title': 'Test title',
+        'opening': 'Test opening',
         'content': 'Test article'
     }
     defaults.update(params)

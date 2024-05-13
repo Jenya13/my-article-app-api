@@ -35,12 +35,11 @@ class ArticleSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField(
         read_only=True)
     topics = TopicSerializer(many=True, required=False)
-    comments = CommentSerializer(many=True, required=False)
 
     class Meta:
         model = Article
-        fields = ['id', 'author', 'title', 'opening',
-                  'created_at', 'updated_at', 'comments', 'topics']
+        fields = ['id', 'author', 'title',
+                  'created_at', 'updated_at',  'topics']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_author(self, obj):
@@ -78,6 +77,8 @@ class ArticleSerializer(serializers.ModelSerializer):
 
 class ArticleDetailSerializer(ArticleSerializer):
     """Serializer for detail view."""
+    comments = CommentSerializer(many=True, required=False)
 
     class Meta(ArticleSerializer.Meta):
-        fields = ArticleSerializer.Meta.fields + ['content']
+        fields = ArticleSerializer.Meta.fields + \
+            ['opening', 'content', 'comments',]
