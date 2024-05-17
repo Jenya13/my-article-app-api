@@ -73,6 +73,7 @@ class Topic(models.Model):
 
 class Comment(models.Model):
     """Comment model object to leave comments on articles."""
+
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)

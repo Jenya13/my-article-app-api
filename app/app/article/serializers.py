@@ -17,17 +17,12 @@ class TopicSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     """Serializer for comments"""
 
-    user = serializers.SerializerMethodField(
-        read_only=True)
+    user_id = serializers.CharField(source='user.id', read_only=True)
 
     class Meta:
         model = Comment
-        fields = ['id', 'user', 'content', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-
-    def get_user(self, obj):
-        """Method to get the author name."""
-        return f"{obj.user.first_name} {obj.user.last_name}"
+        fields = ['id', 'user_id', 'content', 'created_at', 'updated_at']
+        read_only_fields = ['id',  'created_at', 'updated_at']
 
 
 class ArticleSerializer(serializers.ModelSerializer):

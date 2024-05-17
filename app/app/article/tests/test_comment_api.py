@@ -15,9 +15,9 @@ def list_url(article_id):
     return reverse('article:comment-list-create', args=[article_id])
 
 
-def detail_url(article_id, comment_id):
+def detail_url(comment_id):
     """Create and return comment url."""
-    return reverse('article:comment-detail', args=[article_id, comment_id])
+    return reverse('article:comment-detail', args=[comment_id])
 
 
 def create_article(user, **params):
@@ -88,3 +88,70 @@ class PrivateCommentAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(article.comments.count(), 1)
         self.assertEqual(comment.content, payload['content'])
+        self.assertEqual(comment.user, self.user)
+
+    def test_retrieve_comments_list(self):
+
+        article = create_article(self.user)
+        Comment.objects.create(
+            user=self.user, article=article, content='Test comment 1')
+        Comment.objects.create(
+            user=self.user, article=article, content='Test comment 2')
+
+        url = list_url(article.id)
+        res = self.client.get(url)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+        self.assertEqual(res.data[0]['content'], 'Test comment 1')
+        self.assertEqual(res.data[1]['content'], 'Test comment 2')
+
+    def test_delete_comment(self):
+
+        article = create_article(self.user)
+        comment = Comment.objects.create(
+            user=self.user, article=article, content='Test comment')
+        url = detail_url(comment_id=comment.id)
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Comment.objects.filter(id=comment.id).exists())
+
+    def test_user_not_allowed_update_other_user_comment(self):
+        """Test that a user cannot update another user's comment."""
+        article = create_article(self.user)
+        comment = Comment.objects.create(
+            user=self.user, article=article, content='Original comment')
+
+        other_user = get_user_model().objects.create_user(
+            'other'
+            'user',
+            'other@example.com',
+            'password123'
+        )
+
+        self.client.force_authenticate(other_user)
+
+        payload = {'content': 'Updated comment'}
+        url = detail_url(comment_id=comment.id)
+        res = self.client.put(url, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_user_not_allowed_delete_other_user_comment(self):
+        """Test that a user cannot update another user's comment."""
+        article = create_article(self.user)
+        comment = Comment.objects.create(
+            user=self.user, article=article, content='Original comment')
+
+        other_user = get_user_model().objects.create_user(
+            'other'
+            'user',
+            'other@example.com',
+            'password123'
+        )
+
+        self.client.force_authenticate(other_user)
+        url = detail_url(comment_id=comment.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)

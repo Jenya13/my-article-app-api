@@ -2,14 +2,14 @@
 Views for article APIs.
 """
 
-from rest_framework import generics
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from core.models import Article, Comment, Topic
-from article import serializers
+from article import serializers, permissions
 
 
 class CommentListCreateView(generics.ListCreateAPIView):
@@ -32,6 +32,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
         """
         article_id = self.kwargs.get(
             'pk')
+
         serializer.save(user=self.request.user, article_id=article_id)
 
 
@@ -39,13 +40,13 @@ class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = serializers.CommentSerializer
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, permissions.IsOwnerOrReadOnly]
 
     def get_object(self):
-        article_id = self.kwargs.get('article_id')
         comment_id = self.kwargs.get('pk')
-        # return Comment.objects.get(article_id=article_id, id=comment_id)
-        return get_object_or_404(Comment, article_id=article_id, id=comment_id)
+        obj = get_object_or_404(Comment, id=comment_id)
+        self.check_object_permissions(self.request, obj)
+        return obj
 
 
 class ArticleMVS(viewsets.ModelViewSet):

@@ -17,6 +17,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('<int:pk>/comments/',
          views.CommentListCreateView.as_view(), name='comment-list-create'),
-    path('<int:article_id>/comments/<int:pk>/',
+    path('comment/<int:pk>/',
          views.CommentRetrieveUpdateDestroyView.as_view(), name='comment-detail'),
 ]
