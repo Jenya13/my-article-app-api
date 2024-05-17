@@ -20,13 +20,14 @@ def detail_url(article_id):
 
 def list_url():
     """Create and return all articles url."""
-    return reverse('article:articles-all')
+    return reverse('article:articles-list')
 
 
 def create_article(user, **params):
     """Create and return a sample article."""
     defaults = {
         'title': 'Test title',
+        'opening': 'Test opening',
         'content': 'Test article'
     }
     defaults.update(params)
@@ -50,10 +51,14 @@ class PublicArticleAPITests(TestCase):
     def test_unauthorized_user_retriev_all_articles(self):
         """Test retrieving a list of articles."""
         user1 = get_user_model().objects.create_user(
+            'Test',
+            'Test',
             'user1@example.com',
             'testpass123'
         )
         user2 = get_user_model().objects.create_user(
+            'Test sec',
+            'Test sec',
             'user2@example.com',
             'testpass123'
         )
@@ -81,6 +86,8 @@ class PrivateArticleAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
+            'Test',
+            'Test',
             'user@example.com',
             'testpass123'
         )
@@ -102,6 +109,8 @@ class PrivateArticleAPITests(TestCase):
     def test_article_list_limited_to_user(self):
         """Test list of articles is limited to authenticated user."""
         other_user = get_user_model().objects.create_user(
+            'Other',
+            'Other',
             'other@example.com',
             'passtest123',
         )
@@ -132,6 +141,7 @@ class PrivateArticleAPITests(TestCase):
 
         payload = {
             'title': 'Test title',
+            'opening': 'Test opening',
             'content': 'some content'
         }
 
@@ -150,6 +160,7 @@ class PrivateArticleAPITests(TestCase):
 
         payload = {
             'title': 'Test title',
+            'opening': 'Test opening',
             'content': 'some content',
             'topics': [{'name': 'topic 1'}, {'name': 'topic 2'}]
         }
@@ -171,6 +182,7 @@ class PrivateArticleAPITests(TestCase):
         topic_software = Topic.objects.create(user=self.user, name='Software')
         payload = {
             'title': 'Some software article',
+            'opening': 'Test opening',
             'content': 'Article content about software',
             'topics': [{'name': 'Software'}, {'name': 'other topic'}]
         }

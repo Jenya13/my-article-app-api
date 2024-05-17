@@ -45,3 +45,4 @@ class UserAdmin(BaseUserAdmin):
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.Article)
 admin.site.register(models.Topic)
+admin.site.register(models.Comment)

@@ -1,12 +1,12 @@
 """ 
 Serializers for Article API.
 """
-from core.models import Article, Topic
+from core.models import Article, Comment, Topic
 from rest_framework import serializers
 
 
 class TopicSerializer(serializers.ModelSerializer):
-    """Serializer fo topics."""
+    """Serializer for topics."""
 
     class Meta:
         model = Topic
@@ -14,16 +14,27 @@ class TopicSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class CommentSerializer(serializers.ModelSerializer):
+    """Serializer for comments"""
+
+    user_id = serializers.CharField(source='user.id', read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'user_id', 'content', 'created_at', 'updated_at']
+        read_only_fields = ['id',  'created_at', 'updated_at']
+
+
 class ArticleSerializer(serializers.ModelSerializer):
     """Serializer for article."""
     author = serializers.SerializerMethodField(
-        read_only=True)  # CharField(source='user.name', read_only=True)
+        read_only=True)
     topics = TopicSerializer(many=True, required=False)
 
     class Meta:
         model = Article
-        fields = ['id', 'author', 'title', 'opening',
-                  'created_at', 'updated_at', 'topics']
+        fields = ['id', 'author', 'title',
+                  'created_at', 'updated_at',  'topics']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_author(self, obj):
@@ -61,6 +72,8 @@ class ArticleSerializer(serializers.ModelSerializer):
 
 class ArticleDetailSerializer(ArticleSerializer):
     """Serializer for detail view."""
+    comments = CommentSerializer(many=True, required=False)
 
     class Meta(ArticleSerializer.Meta):
-        fields = ArticleSerializer.Meta.fields + ['content']
+        fields = ArticleSerializer.Meta.fields + \
+            ['opening', 'content', 'comments',]
