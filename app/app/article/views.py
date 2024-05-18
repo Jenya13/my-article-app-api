@@ -13,25 +13,35 @@ from article import serializers, permissions
 
 
 class LikeListCreateView(generics.ListCreateAPIView):
+    """View for list or create likes for article. """
+
     queryset = Like.objects.all()
     serializer_class = serializers.LikeSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        """Gets all the likes for specific article."""
+
         article_id = self.kwargs['pk']
         return Like.objects.filter(article_id=article_id)
 
     def perform_create(self, serializer):
+        """Method for like creation."""
+
         article_id = self.kwargs['pk']
         serializer.save(user=self.request.user, article_id=article_id)
 
 
 class LikeDestroyView(generics.DestroyAPIView):
+    """View for deleting like that have been set to an article."""
+
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
+        """Get the like that user set to an article."""
+
         user = self.request.user
         article_id = self.kwargs['pk']
         like = Like.objects.filter(user=user, article_id=article_id).first()
@@ -40,17 +50,18 @@ class LikeDestroyView(generics.DestroyAPIView):
         return like
 
     def delete(self, request, *args, **kwargs):
+        """Delete method for like that has been set."""
+
         instance = self.get_object()
         if instance is None:
             return Response({'detail': 'Like not found.'}, status=status.HTTP_404_NOT_FOUND)
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # def perform_destroy(self, instance):
-    #     instance.delete()
-
 
 class CommentListCreateView(generics.ListCreateAPIView):
+    """Retrieve or create comments view."""
+
     queryset = Comment.objects.all()
     serializer_class = serializers.CommentSerializer
     authentication_classes = [TokenAuthentication]
@@ -75,12 +86,15 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
 
 class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    """View to retrieve update or delete comment."""
+
     queryset = Comment.objects.all()
     serializer_class = serializers.CommentSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated, permissions.IsOwnerOrReadOnly]
 
     def get_object(self):
+        """Get comment object."""
         comment_id = self.kwargs.get('pk')
         obj = get_object_or_404(Comment, id=comment_id)
         self.check_object_permissions(self.request, obj)

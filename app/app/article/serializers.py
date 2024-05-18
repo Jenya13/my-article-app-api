@@ -16,6 +16,7 @@ class LikeSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
     def create(self, validated_data):
+        """Method set a like to article, if a user already set like error raised."""
         user = validated_data['user']
         article_id = validated_data['article_id']
         if Like.objects.filter(user=user, article_id=article_id).exists():
@@ -49,13 +50,17 @@ class ArticleSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField(
         read_only=True)
     topics = TopicSerializer(many=True, required=False)
-    likes = LikeSerializer(many=True, required=False)
+    likes_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Article
         fields = ['id', 'author', 'title',
-                  'created_at', 'updated_at', 'likes', 'topics']
+                  'created_at', 'updated_at', 'likes_count', 'topics']
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_likes_count(self, obj):
+        """Method count likes for article."""
+        return obj.likes.count()
 
     def get_author(self, obj):
         """Method to get the author name."""
