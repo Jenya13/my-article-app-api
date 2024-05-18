@@ -19,4 +19,8 @@ urlpatterns = [
          views.CommentListCreateView.as_view(), name='comment-list-create'),
     path('comment/<int:pk>/',
          views.CommentRetrieveUpdateDestroyView.as_view(), name='comment-detail'),
+    path('<int:pk>/likes/', views.LikeListCreateView.as_view(),
+         name='like-list-create'),
+    path('<int:pk>/likes/remove/', views.LikeDestroyView.as_view(),
+         name='like-delete')
 ]

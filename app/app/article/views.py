@@ -2,14 +2,52 @@
 Views for article APIs.
 """
 
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from core.models import Article, Comment, Topic
+from core.models import Article, Comment, Topic, Like
 from article import serializers, permissions
+
+
+class LikeListCreateView(generics.ListCreateAPIView):
+    queryset = Like.objects.all()
+    serializer_class = serializers.LikeSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        article_id = self.kwargs['pk']
+        return Like.objects.filter(article_id=article_id)
+
+    def perform_create(self, serializer):
+        article_id = self.kwargs['pk']
+        serializer.save(user=self.request.user, article_id=article_id)
+
+
+class LikeDestroyView(generics.DestroyAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        user = self.request.user
+        article_id = self.kwargs['pk']
+        like = Like.objects.filter(user=user, article_id=article_id).first()
+        if not like:
+            return None
+        return like
+
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance is None:
+            return Response({'detail': 'Like not found.'}, status=status.HTTP_404_NOT_FOUND)
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # def perform_destroy(self, instance):
+    #     instance.delete()
 
 
 class CommentListCreateView(generics.ListCreateAPIView):

@@ -1,8 +1,27 @@
 """ 
 Serializers for Article API.
 """
-from core.models import Article, Comment, Topic
+from core.models import Article, Comment, Topic, Like
 from rest_framework import serializers
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    """Serializer for likes."""
+    user_id = serializers.CharField(source='user.id', read_only=True)
+    article_id = serializers.CharField(source='article.id', read_only=True)
+
+    class Meta:
+        model = Like
+        fields = ['id', 'user_id', 'article_id', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def create(self, validated_data):
+        user = validated_data['user']
+        article_id = validated_data['article_id']
+        if Like.objects.filter(user=user, article_id=article_id).exists():
+            raise serializers.ValidationError(
+                {'error': 'You have already liked this article.'})
+        return super().create(validated_data)
 
 
 class TopicSerializer(serializers.ModelSerializer):
@@ -30,11 +49,12 @@ class ArticleSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField(
         read_only=True)
     topics = TopicSerializer(many=True, required=False)
+    likes = LikeSerializer(many=True, required=False)
 
     class Meta:
         model = Article
         fields = ['id', 'author', 'title',
-                  'created_at', 'updated_at',  'topics']
+                  'created_at', 'updated_at', 'likes', 'topics']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_author(self, obj):
