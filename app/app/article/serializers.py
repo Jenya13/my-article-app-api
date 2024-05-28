@@ -7,12 +7,14 @@ from rest_framework import serializers
 
 class LikeSerializer(serializers.ModelSerializer):
     """Serializer for likes."""
-    user_id = serializers.CharField(source='user.id', read_only=True)
+    # user_id = serializers.CharField(source='user.id', read_only=True)
+    user_name = serializers.SerializerMethodField(
+        read_only=True)
     article_id = serializers.CharField(source='article.id', read_only=True)
 
     class Meta:
         model = Like
-        fields = ['id', 'user_id', 'article_id', 'created_at']
+        fields = ['id', 'user_name', 'article_id', 'created_at']
         read_only_fields = ['id', 'created_at']
 
     def create(self, validated_data):
@@ -23,6 +25,10 @@ class LikeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {'error': 'You have already liked this article.'})
         return super().create(validated_data)
+
+    def get_user_name(self, obj):
+        """Method to get the author name."""
+        return f"{obj.user.first_name} {obj.user.last_name}"
 
 
 class TopicSerializer(serializers.ModelSerializer):
@@ -37,12 +43,18 @@ class TopicSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     """Serializer for comments"""
 
-    user_id = serializers.CharField(source='user.id', read_only=True)
+    # user_id = serializers.CharField(source='user.id', read_only=True)
+    user_name = serializers.SerializerMethodField(
+        read_only=True)
 
     class Meta:
         model = Comment
-        fields = ['id', 'user_id', 'content', 'created_at', 'updated_at']
+        fields = ['id', 'user_name', 'content', 'created_at', 'updated_at']
         read_only_fields = ['id',  'created_at', 'updated_at']
+
+    def get_user_name(self, obj):
+        """Method to get the author name."""
+        return f"{obj.user.first_name} {obj.user.last_name}"
 
 
 class ArticleSerializer(serializers.ModelSerializer):

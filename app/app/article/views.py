@@ -6,7 +6,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from core.models import Article, Comment, Topic, Like
 from article import serializers, permissions
@@ -15,7 +15,7 @@ from article import serializers, permissions
 class LikeListCreateView(generics.ListCreateAPIView):
     """View for list or create likes for article. """
 
-    queryset = Like.objects.all()
+    # queryset = Like.objects.all()
     serializer_class = serializers.LikeSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -126,7 +126,10 @@ class ArticleMVS(viewsets.ModelViewSet):
 class ArticleVS(viewsets.ViewSet):
     """View to retrieve a list of all articles for all users or specific article for authenticated user."""
 
-    # to add permissions
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            return [permissions.IsAuthenticatedForRetrieve()]
+        return [AllowAny()]
 
     def list(self, request):
         articles = Article.objects.all()
