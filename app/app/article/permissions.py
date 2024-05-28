@@ -13,3 +13,11 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         is_owner = obj.user == request.user
 
         return is_owner
+
+
+class IsAuthenticatedForRetrieve(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        if view.action == 'retrieve':
+            return request.user and request.user.is_authenticated
+        return True

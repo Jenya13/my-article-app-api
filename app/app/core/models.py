@@ -85,3 +85,18 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.content
+
+
+class Like(models.Model):
+    """Like model object so user can like articles."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
+    article = models.ForeignKey(
+        Article, related_name='likes', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'article')
+
+    def __str__(self):
+        return f"{self.user} likes {self.article}"

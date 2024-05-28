@@ -75,3 +75,12 @@ class ModelTests(TestCase):
         comment = models.Comment.objects.create(
             user=user, content="test comment content", article=article)
         self.assertEqual(str(comment), comment.content)
+
+    def test_create_like(self):
+        """Test creating like for article successful."""
+        user = create_user()
+        article = models.Article.objects.create(
+            user=user, title="Test title", content="Test article content.")
+        like = models.Like.objects.create(user=user, article=article)
+
+        self.assertEqual(str(like), f"{user} likes {str(article)}")
