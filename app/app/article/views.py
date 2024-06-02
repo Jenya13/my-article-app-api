@@ -7,8 +7,10 @@ from rest_framework.response import Response
 from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import filters
 from django.shortcuts import get_object_or_404
 from core.models import Article, Comment, Topic, Like
+from django.db.models import Count
 from core.pagination import ArticlePagination, CommentPagination
 from article import serializers, permissions
 
@@ -139,6 +141,10 @@ class ArticleMVS(viewsets.ModelViewSet):
 class ArticleVS(viewsets.ViewSet):
     """View to retrieve a list of all articles for all users or specific article for authenticated user."""
 
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['user__first_name',
+                     'user__last_name', 'title', 'topics__name']
+    ordering_fields = ['likes_count', 'created_at']
     pagination_class = ArticlePagination
 
     def get_permissions(self):
@@ -147,7 +153,12 @@ class ArticleVS(viewsets.ViewSet):
         return [AllowAny()]
 
     def list(self, request):
-        queryset = Article.objects.all()
+        queryset = Article.objects.annotate(likes_count=Count('likes'))
+        # filters
+        for backend in list(self.filter_backends):
+            queryset = backend().filter_queryset(self.request, queryset, self)
+
+        # pagination
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request)
 
@@ -168,7 +179,7 @@ class TopicViewSet(mixins.ListModelMixin,
                    mixins.UpdateModelMixin,
                    mixins.DestroyModelMixin,
                    viewsets.GenericViewSet):
-    """Manage tags in the database."""
+    """Manage topics in the database."""
     serializer_class = serializers.TopicSerializer
     queryset = Topic.objects.all()
     authentication_classes = [TokenAuthentication]
