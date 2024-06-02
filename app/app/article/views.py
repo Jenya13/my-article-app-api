@@ -9,13 +9,14 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from core.models import Article, Comment, Topic, Like
+from core.pagination import ArticlePagination, CommentPagination
 from article import serializers, permissions
 
 
 class LikeListCreateView(generics.ListCreateAPIView):
     """View for list or create likes for article. """
 
-    # queryset = Like.objects.all()
+    queryset = Like.objects.all()
     serializer_class = serializers.LikeSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -66,6 +67,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
     serializer_class = serializers.CommentSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+    pagination_class = CommentPagination
 
     def get_queryset(self):
         """
@@ -83,6 +85,16 @@ class CommentListCreateView(generics.ListCreateAPIView):
             'pk')
 
         serializer.save(user=self.request.user, article_id=article_id)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class CommentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -107,6 +119,7 @@ class ArticleMVS(viewsets.ModelViewSet):
     queryset = Article.objects.all()
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+    pagination_class = ArticlePagination
 
     def get_queryset(self):
         """Retrieve articles for authenticated user."""
@@ -126,14 +139,23 @@ class ArticleMVS(viewsets.ModelViewSet):
 class ArticleVS(viewsets.ViewSet):
     """View to retrieve a list of all articles for all users or specific article for authenticated user."""
 
+    pagination_class = ArticlePagination
+
     def get_permissions(self):
         if self.action == 'retrieve':
             return [permissions.IsAuthenticatedForRetrieve()]
         return [AllowAny()]
 
     def list(self, request):
-        articles = Article.objects.all()
-        serializer = serializers.ArticleSerializer(articles, many=True)
+        queryset = Article.objects.all()
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request)
+
+        if page is not None:
+            serializer = serializers.ArticleSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = serializers.ArticleSerializer(queryset, many=True)
         return Response(serializer.data)
 
     def retrieve(self, request, pk='pk'):
