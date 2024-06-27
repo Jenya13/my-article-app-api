@@ -3,6 +3,7 @@ Serializers for Article API.
 """
 from core.models import Article, Comment, Topic, Like
 from rest_framework import serializers
+from app.utils.image_processing import process_image
 
 
 class LikeSerializer(serializers.ModelSerializer):
@@ -63,10 +64,11 @@ class ArticleSerializer(serializers.ModelSerializer):
         read_only=True)
     topics = TopicSerializer(many=True, required=False)
     likes_count = serializers.SerializerMethodField()
+    image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Article
-        fields = ['id', 'author', 'title',
+        fields = ['id', 'author', 'title', 'image',
                   'created_at', 'updated_at', 'likes_count', 'topics']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
@@ -88,6 +90,7 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Create an article."""
+
         topics = validated_data.pop('topics', [])
         article = Article.objects.create(**validated_data)
         self._get_or_create_topics(topics, article)
@@ -95,12 +98,21 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Update Article."""
+        image = validated_data.get('image', None)
+        if image and instance.image:
+            instance.image.delete(save=False)
+            processed_image = process_image(image, 'PNG', (700, 400))
+            validated_data['image'] = processed_image
+
         topics = validated_data.pop('topics', None)
         if topics is not None:
             instance.topics.clear()
             self._get_or_create_topics(topics, instance)
 
         for attr, value in validated_data.items():
+            if attr == 'image' and value is None:
+                # Skip updating image field if value is None to retain the existing image
+                continue
             setattr(instance, attr, value)
 
         instance.save()

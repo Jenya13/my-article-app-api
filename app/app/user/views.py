@@ -2,7 +2,7 @@
 Views for the user API.
 """
 
-from rest_framework import generics, authentication, permissions, status
+from rest_framework import generics, authentication, permissions, status, parsers
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -42,6 +42,8 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser,
+                      parsers.FormParser, parsers.JSONParser]
 
     def get_object(self):
         """Retrieve and return the authenticated user."""

@@ -6,6 +6,22 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 
+def user_profile_pic_path(instance, filename):
+    """Generate file path for new user profile picture."""
+    ext = filename.split('.')[-1]
+    # The new file name will be user_id_profile_pic.ext
+    filename = f'user_{instance.id}_profile_pic.{ext}'
+    return f'profile_pics/{filename}'
+
+
+def article_pic_path(instance, filename):
+    """Generate file path for article picture."""
+    ext = filename.split('.')[-1]
+    # The new file name will be user_id_profile_pic.ext
+    filename = f'user_article_{instance.id}_pic.{ext}'
+    return f'article_pic/{filename}'
+
+
 class UserManager(BaseUserManager):
     """User managment model."""
 
@@ -40,7 +56,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     contact_me = models.CharField(max_length=255, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-
+    image = models.ImageField(
+        upload_to=user_profile_pic_path, blank=True, null=True)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
@@ -52,6 +69,8 @@ class Article(models.Model):
                              on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     opening = models.TextField()
+    image = models.ImageField(
+        upload_to=article_pic_path, blank=True, null=True)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

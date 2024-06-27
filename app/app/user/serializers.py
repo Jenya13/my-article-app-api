@@ -6,6 +6,7 @@ from django.contrib.auth import (get_user_model, authenticate)
 from django.utils.translation import gettext as _
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
+from app.utils.image_processing import process_image
 
 
 def validate_name(value):
@@ -22,26 +23,35 @@ class UserSerializer(serializers.ModelSerializer):
     """Serializer for user object."""
     first_name = serializers.CharField(validators=[validate_name])
     last_name = serializers.CharField(validators=[validate_name])
+    image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = get_user_model()
-        fields = ['email', 'password', 'first_name',
+        fields = ['email', 'password', 'image', 'first_name',
                   'last_name', 'bio', 'contact_me']
         extra_kwargs = {'password': {'write_only': True, 'min_length': 5}}
 
     def create(self, validated_data):
         """Create and return user with encypted password."""
+        image = validated_data.pop('image', None)
+        if image:
+            processed_image = process_image(image)
+            validated_data['image'] = processed_image
         return get_user_model().objects.create_user(**validated_data)
 
     def update(self, instance, validated_data):
         """Method for updating user info."""
-        instance.first_name = validated_data.get(
-            'first_name', instance.first_name)
-        instance.last_name = validated_data.get(
-            'last_name', instance.last_name)
-        instance.bio = validated_data.get('bio', instance.bio)
-        instance.contact_me = validated_data.get(
-            'contact_me', instance.contact_me)
+        image = validated_data.get('image', None)
+        if image and instance.image:
+            instance.image.delete(save=False)
+            processed_image = process_image(image)
+            validated_data['image'] = processed_image
+
+        for attr, value in validated_data.items():
+            if attr == 'password':
+                instance.set_password(value)
+            else:
+                setattr(instance, attr, value)
         instance.save()
         return instance
 
@@ -49,10 +59,10 @@ class UserSerializer(serializers.ModelSerializer):
         """
         This method is called after all field-level validations are passed.
         """
-        # Ensure that the first character of the name fields is capitalized
-        data['first_name'] = data['first_name'].capitalize()
-        data['last_name'] = data['last_name'].capitalize()
-
+        if 'first_name' in data:
+            data['first_name'] = validate_name(data['first_name'])
+        if 'last_name' in data:
+            data['last_name'] = validate_name(data['last_name'])
         return data
 
 

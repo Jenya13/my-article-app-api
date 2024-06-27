@@ -2,7 +2,7 @@
 Views for article APIs.
 """
 
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, parsers
 from rest_framework.response import Response
 from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
@@ -122,6 +122,8 @@ class ArticleMVS(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     pagination_class = ArticlePagination
+    parser_classes = [parsers.MultiPartParser,
+                      parsers.FormParser, parsers.JSONParser]
 
     def get_queryset(self):
         """Retrieve articles for authenticated user."""
@@ -136,6 +138,10 @@ class ArticleMVS(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Create a new article."""
         serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        """Update an article."""
+        serializer.save()
 
 
 class ArticleVS(viewsets.ViewSet):
